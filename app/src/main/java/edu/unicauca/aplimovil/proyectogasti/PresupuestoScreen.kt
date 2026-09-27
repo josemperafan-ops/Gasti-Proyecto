@@ -631,7 +631,7 @@ fun ItemBarraPresupuesto(
         Text(
             text = texto,
             color = if (activo) VerdeGasti else GrisTexto,
-            fontSize = 8.sp
+            fontSize = 9.sp
         )
     }
 }
