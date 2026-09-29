@@ -2,6 +2,7 @@ package edu.unicauca.aplimovil.proyectogasti.ui.theme
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,12 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import edu.unicauca.aplimovil.proyectogasti.R
 
 private val Fondo = Color(0xFF050B14)
@@ -40,10 +44,10 @@ private val VerdeGasti = Color(0xFF00E5A8)
 private val GrisTexto = Color(0xFF8B9AAF)
 private val Borde = Color(0xFF26344A)
 
-
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit
+    onLogin: () -> Unit,
+    onRegistro: () -> Unit
 ) {
 
     var correo by remember {
@@ -54,6 +58,21 @@ fun LoginScreen(
         mutableStateOf("")
     }
 
+    var mensajeError by remember {
+        mutableStateOf("")
+    }
+
+    var mostrarRecuperacion by remember {
+        mutableStateOf(false)
+    }
+
+    var mensajeRecuperacion by remember {
+        mutableStateOf("")
+    }
+
+    var mostrandoMensajeExito by remember {
+        mutableStateOf(false)
+    }
 
     Box(
         modifier = Modifier
@@ -69,36 +88,18 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
 
-            /*
-             * =====================================================
-             * LOGO DE GASTI
-             *
-             * Se utiliza el mismo logo:
-             * res/drawable/logogasti
-             * =====================================================
-             */
-
             Image(
                 painter = painterResource(
                     id = R.drawable.logogasti
                 ),
                 contentDescription = "Logo de Gasti",
-                modifier = Modifier
-                    .size(90.dp),
+                modifier = Modifier.size(90.dp),
                 contentScale = ContentScale.Fit
             )
-
 
             Spacer(
                 modifier = Modifier.height(14.dp)
             )
-
-
-            /*
-             * =====================================================
-             * NOMBRE DE LA APLICACIÓN
-             * =====================================================
-             */
 
             Text(
                 text = "Gasti",
@@ -107,11 +108,9 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
 
-
             Spacer(
                 modifier = Modifier.height(5.dp)
             )
-
 
             Text(
                 text = "Controla tus gastos.",
@@ -119,17 +118,9 @@ fun LoginScreen(
                 fontSize = 12.sp
             )
 
-
             Spacer(
                 modifier = Modifier.height(30.dp)
             )
-
-
-            /*
-             * =====================================================
-             * TARJETA DEL LOGIN
-             * =====================================================
-             */
 
             Column(
                 modifier = Modifier
@@ -148,17 +139,9 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-
                 Spacer(
                     modifier = Modifier.height(18.dp)
                 )
-
-
-                /*
-                 * =================================================
-                 * CORREO
-                 * =================================================
-                 */
 
                 Text(
                     text = "Correo electrónico",
@@ -174,6 +157,7 @@ fun LoginScreen(
                     value = correo,
                     onValueChange = {
                         correo = it
+                        mensajeError = ""
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -196,17 +180,9 @@ fun LoginScreen(
                     shape = RoundedCornerShape(9.dp)
                 )
 
-
                 Spacer(
                     modifier = Modifier.height(14.dp)
                 )
-
-
-                /*
-                 * =================================================
-                 * CONTRASEÑA
-                 * =================================================
-                 */
 
                 Text(
                     text = "Contraseña",
@@ -222,6 +198,7 @@ fun LoginScreen(
                     value = contrasena,
                     onValueChange = {
                         contrasena = it
+                        mensajeError = ""
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -245,50 +222,70 @@ fun LoginScreen(
                     shape = RoundedCornerShape(9.dp)
                 )
 
-
                 Spacer(
                     modifier = Modifier.height(8.dp)
                 )
-
-
-                /*
-                 * =================================================
-                 * OLVIDÉ MI CONTRASEÑA
-                 * =================================================
-                 */
 
                 Text(
                     text = "¿Olvidaste tu contraseña?",
                     color = VerdeGasti,
                     fontSize = 10.sp,
-                    modifier = Modifier.align(
-                        Alignment.End
-                    )
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable {
+                            mensajeRecuperacion = ""
+                            mostrarRecuperacion = true
+                        }
                 )
-
 
                 Spacer(
-                    modifier = Modifier.height(18.dp)
+                    modifier = Modifier.height(10.dp)
                 )
 
+                if (mensajeError.isNotEmpty()) {
 
-                /*
-                 * =================================================
-                 * BOTÓN ENTRAR
-                 * =================================================
-                 */
+                    Text(
+                        text = mensajeError,
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 11.sp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+                }
 
                 Button(
                     onClick = {
 
-                        // PENDIENTE:
-                        // Más adelante validaremos el correo
-                        // y la contraseña.
+                        if (correo.isBlank() || contrasena.isBlank()) {
 
-                        // Por ahora cualquier click lleva
-                        // directamente al Home.
+                            mensajeError =
+                                "Ingresa tu correo y contraseña."
 
-                        onLogin()
+                        } else {
+
+                            FirebaseAuth
+                                .getInstance()
+                                .signInWithEmailAndPassword(
+                                    correo.trim(),
+                                    contrasena
+                                )
+                                .addOnCompleteListener { tarea ->
+
+                                    if (tarea.isSuccessful) {
+
+                                        mensajeError = ""
+
+                                        onLogin()
+
+                                    } else {
+
+                                        mensajeError =
+                                            "Correo o contraseña incorrectos."
+                                    }
+                                }
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -307,41 +304,175 @@ fun LoginScreen(
                     )
                 }
 
-
                 Spacer(
                     modifier = Modifier.height(12.dp)
                 )
 
-
-                /*
-                 * =================================================
-                 * BOTÓN GOOGLE
-                 * =================================================
-                 */
-
                 OutlinedButton(
-                    onClick = {
-
-                        // PENDIENTE:
-                        // Implementar inicio de sesión
-                        // con Google.
-
-                    },
+                    onClick = onRegistro,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(9.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
+                        contentColor = VerdeGasti
                     )
                 ) {
 
                     Text(
-                        text = "Continuar con Google",
+                        text = "Crear una cuenta",
                         fontSize = 11.sp
                     )
                 }
             }
+        }
+
+        if (mostrarRecuperacion) {
+
+            AlertDialog(
+                onDismissRequest = {
+                    mostrarRecuperacion = false
+                },
+
+                title = {
+                    Text(
+                        text = "Recuperar contraseña"
+                    )
+                },
+
+                text = {
+
+                    Column {
+
+                        Text(
+                            text = "Escribe el correo de tu cuenta y te enviaremos un enlace para cambiar la contraseña."
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(12.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = correo,
+                            onValueChange = {
+                                correo = it
+                                mensajeRecuperacion = ""
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = {
+                                Text(
+                                    text = "correo@ejemplo.com"
+                                )
+                            }
+                        )
+
+                        if (mensajeRecuperacion.isNotEmpty()) {
+
+                            Spacer(
+                                modifier = Modifier.height(8.dp)
+                            )
+
+                            Text(
+                                text = mensajeRecuperacion,
+                                color = Color(0xFFFF6B6B),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                },
+
+                confirmButton = {
+
+                    TextButton(
+                        onClick = {
+
+                            if (correo.isBlank()) {
+
+                                mensajeRecuperacion =
+                                    "Ingresa tu correo."
+
+                            } else {
+
+                                FirebaseAuth
+                                    .getInstance()
+                                    .sendPasswordResetEmail(
+                                        correo.trim()
+                                    )
+                                    .addOnCompleteListener { tarea ->
+
+                                        if (tarea.isSuccessful) {
+
+                                            mostrarRecuperacion = false
+                                            mostrandoMensajeExito = true
+
+                                        } else {
+
+                                            mensajeRecuperacion =
+                                                "No se pudo enviar el correo. Verifica el correo ingresado."
+                                        }
+                                    }
+                            }
+                        }
+                    ) {
+
+                        Text(
+                            text = "Enviar",
+                            color = VerdeGasti
+                        )
+                    }
+                },
+
+                dismissButton = {
+
+                    TextButton(
+                        onClick = {
+                            mostrarRecuperacion = false
+                        }
+                    ) {
+
+                        Text(
+                            text = "Cancelar"
+                        )
+                    }
+                }
+            )
+        }
+
+        if (mostrandoMensajeExito) {
+
+            AlertDialog(
+                onDismissRequest = {
+                    mostrandoMensajeExito = false
+                },
+
+                title = {
+                    Text(
+                        text = "Correo enviado"
+                    )
+                },
+
+                text = {
+                    Text(
+                        text = "Revisa tu correo electrónico. Allí encontrarás un enlace para restablecer tu contraseña."
+                    )
+                },
+
+                confirmButton = {
+
+                    TextButton(
+                        onClick = {
+                            mostrandoMensajeExito = false
+                        }
+                    ) {
+
+                        Text(
+                            text = "Aceptar",
+                            color = VerdeGasti
+                        )
+                    }
+                }
+            )
         }
     }
 }

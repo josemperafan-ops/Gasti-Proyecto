@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 
 private val FondoPerfil = Color(0xFF050B14)
 private val AzulPerfil = Color(0xFF101A2A)
@@ -39,8 +40,27 @@ fun PerfilScreen(
     onGastos: () -> Unit,
     onPresupuesto: () -> Unit,
     onStats: () -> Unit,
-    onPerfil: () -> Unit
+    onPerfil: () -> Unit,
+    onCerrarSesion: () -> Unit
 ) {
+
+    val usuario = FirebaseAuth
+        .getInstance()
+        .currentUser
+
+    val nombreUsuario = usuario?.displayName
+        ?: "Usuario"
+
+    val correoUsuario = usuario?.email
+        ?: "Sin correo"
+
+    val iniciales = nombreUsuario
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .joinToString("") {
+            it.first().uppercase()
+        }
 
     Box(
         modifier = Modifier
@@ -82,7 +102,7 @@ fun PerfilScreen(
                 ) {
 
                     Text(
-                        text = "JH",
+                        text = iniciales.ifEmpty { "U" },
                         color = Color(0xFF00150F),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -96,7 +116,7 @@ fun PerfilScreen(
                 Column {
 
                     Text(
-                        text = "Jhoan Hinestroza",
+                        text = nombreUsuario,
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -107,7 +127,7 @@ fun PerfilScreen(
                     )
 
                     Text(
-                        text = "jhoan@correo.com",
+                        text = correoUsuario,
                         color = GrisPerfil,
                         fontSize = 10.sp
                     )
@@ -134,7 +154,7 @@ fun PerfilScreen(
                     ) {
 
                         Text(
-                            text = "• Estudiante universitario",
+                            text = "• Usuario de Gasti",
                             color = VerdePerfil,
                             fontSize = 8.sp
                         )
@@ -283,7 +303,10 @@ fun PerfilScreen(
                         1.dp,
                         Color(0xFF713040),
                         RoundedCornerShape(10.dp)
-                    ),
+                    )
+                    .clickable {
+                        onCerrarSesion()
+                    },
                 contentAlignment = Alignment.Center
             ) {
 
@@ -390,7 +413,6 @@ private fun OpcionPerfil(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                // PENDIENTE
             }
     ) {
 

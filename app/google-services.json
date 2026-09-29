@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "886126509017",
+    "project_id": "gasti-12b3f",
+    "storage_bucket": "gasti-12b3f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:886126509017:android:cbe71c57009c772951f7c8",
+        "android_client_info": {
+          "package_name": "edu.unicauca.aplimovil.proyectogasti"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpgn8qDuT31jK844rCX6T4BT6c3ND_VeY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

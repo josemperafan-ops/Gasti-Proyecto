@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.google.firebase.auth.FirebaseAuth
 
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.EstadisticasScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.HomeScreen
@@ -14,6 +15,7 @@ import edu.unicauca.aplimovil.proyectogasti.ui.theme.LoginScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.PerfilScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.PresupuestoScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.RegistrarGastoScreen
+import edu.unicauca.aplimovil.proyectogasti.ui.theme.RegistroScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -22,28 +24,46 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            var pantallaActual by remember {
-                mutableStateOf("login")
-            }
+            val usuarioActual = FirebaseAuth
+                .getInstance()
+                .currentUser
 
-            /*
-             * LOGIN
-             */
+            var pantallaActual by remember {
+                mutableStateOf(
+                    if (usuarioActual != null) {
+                        "home"
+                    } else {
+                        "login"
+                    }
+                )
+            }
 
             if (pantallaActual == "login") {
 
                 LoginScreen(
                     onLogin = {
                         pantallaActual = "home"
+                    },
+
+                    onRegistro = {
+                        pantallaActual = "registro"
                     }
                 )
             }
 
-            /*
-             * =====================================================
-             * INICIO
-             * =====================================================
-             */
+            else if (pantallaActual == "registro") {
+
+                RegistroScreen(
+
+                    onRegistroExitoso = {
+                        pantallaActual = "home"
+                    },
+
+                    onVolverLogin = {
+                        pantallaActual = "login"
+                    }
+                )
+            }
 
             else if (pantallaActual == "home") {
 
@@ -69,12 +89,6 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-
-            /*
-             * =====================================================
-             * GASTOS
-             * =====================================================
-             */
 
             else if (pantallaActual == "registrar_gasto") {
 
@@ -106,12 +120,6 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            /*
-             * =====================================================
-             * PRESUPUESTO
-             * =====================================================
-             */
-
             else if (pantallaActual == "presupuesto") {
 
                 PresupuestoScreen(
@@ -141,12 +149,6 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-
-            /*
-             * =====================================================
-             * ESTADÍSTICAS
-             * =====================================================
-             */
 
             else if (pantallaActual == "estadisticas") {
 
@@ -178,12 +180,6 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            /*
-             * =====================================================
-             * PERFIL
-             * =====================================================
-             */
-
             else if (pantallaActual == "perfil") {
 
                 PerfilScreen(
@@ -206,6 +202,15 @@ class MainActivity : ComponentActivity() {
 
                     onPerfil = {
                         pantallaActual = "perfil"
+                    },
+
+                    onCerrarSesion = {
+
+                        FirebaseAuth
+                            .getInstance()
+                            .signOut()
+
+                        pantallaActual = "login"
                     }
                 )
             }
