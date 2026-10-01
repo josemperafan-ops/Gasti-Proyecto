@@ -100,7 +100,7 @@ fun RegistroScreen(
         ) {
 
             Text(
-                text = "Nombre",
+                text = "Nombre completo",
                 color = GrisTexto,
                 fontSize = 10.sp
             )
@@ -121,7 +121,7 @@ fun RegistroScreen(
                 singleLine = true,
                 placeholder = {
                     Text(
-                        text = "Tu nombre",
+                        text = "Tu Nombre completo",
                         color = GrisTexto,
                         fontSize = 11.sp
                     )

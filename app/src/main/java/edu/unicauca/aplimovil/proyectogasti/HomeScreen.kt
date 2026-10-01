@@ -1,6 +1,5 @@
 package edu.unicauca.aplimovil.proyectogasti.ui.theme
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,17 +18,28 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
+import edu.unicauca.aplimovil.proyectogasti.data.local.GastiDatabase
+import edu.unicauca.aplimovil.proyectogasti.data.local.entity.GastoEntity
+import edu.unicauca.aplimovil.proyectogasti.data.repository.PresupuestoRepository
+import edu.unicauca.aplimovil.proyectogasti.ui.viewmodel.HomeViewModel
 
 private val Fondo = Color(0xFF050B14)
 private val AzulTarjeta = Color(0xFF101A2A)
@@ -40,13 +50,33 @@ private val Borde = Color(0xFF26344A)
 @Composable
 fun HomeScreen(
     onRegistrarGasto: () -> Unit,
+    onEditarGasto: (GastoEntity) -> Unit,
     onGastos: () -> Unit,
     onPresupuesto: () -> Unit,
     onStats: () -> Unit,
     onPerfil: () -> Unit
 ) {
+    val context = LocalContext.current.applicationContext
+    val database = remember { GastiDatabase.getDatabase(context) }
+    val presupuestoRepository = remember { PresupuestoRepository(database.presupuestoDao()) }
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val correoUsuario = currentUser?.email ?: "correo@ejemplo.com"
+    val nombreUsuario = currentUser?.displayName ?: currentUser?.email?.substringBefore("@") ?: "Usuario"
+    val mesAnio = "Septiembre 2026"
 
+    val viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.Factory(
+            presupuestoRepository,
+            database.gastoDao(),
+            correoUsuario,
+            mesAnio
+        )
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+
+    val esCuentaNueva = uiState.listaGastos.isEmpty() && uiState.presupuestoTotal == 0.0
 
     Box(
         modifier = Modifier
@@ -75,7 +105,7 @@ fun HomeScreen(
                 Column {
 
                     Text(
-                        text = "Hola, Jhoan, Jose y Stiven",
+                        text = "Hola, $nombreUsuario",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -86,7 +116,7 @@ fun HomeScreen(
                     )
 
                     Text(
-                        text = "Agosto 2026",
+                        text = mesAnio,
                         color = GrisTexto,
                         fontSize = 12.sp
                     )
@@ -119,84 +149,145 @@ fun HomeScreen(
                 modifier = Modifier.height(20.dp)
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = AzulTarjeta
-                )
-            ) {
-
-                Column(
-                    modifier = Modifier.padding(18.dp)
+            if (esCuentaNueva) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = AzulTarjeta
+                    )
                 ) {
-
-                    Text(
-                        text = "Balance disponible",
-                        color = GrisTexto,
-                        fontSize = 11.sp
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(5.dp)
-                    )
-
-                    Text(
-                        text = "$ 226.300",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(18.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        modifier = Modifier.padding(20.dp)
                     ) {
+                        Text(
+                            text = "👋 ¡Bienvenido a Gasti!",
+                            color = VerdeGasti,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                        Column {
+                        Spacer(modifier = Modifier.height(8.dp))
 
+                        Text(
+                            text = "Para comenzar, configura tus presupuestos y registra tu primer gasto.",
+                            color = GrisTexto,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Button(
+                            onClick = onPresupuesto,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = VerdeGasti),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
                             Text(
-                                text = "Ingresos",
-                                color = GrisTexto,
-                                fontSize = 10.sp
-                            )
-
-                            Spacer(
-                                modifier = Modifier.height(3.dp)
-                            )
-
-                            Text(
-                                text = "$ 630.000",
-                                color = VerdeGasti,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "1. Configurar Presupuesto",
+                                color = Color(0xFF00150F),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
                             )
                         }
 
-                        Column(
-                            horizontalAlignment = Alignment.End
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = onRegistrarGasto,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF182438)),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = "2. Registrar Primer Gasto",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = AzulTarjeta
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(18.dp)
+                    ) {
+
+                        Text(
+                            text = "Disponible en presupuesto",
+                            color = GrisTexto,
+                            fontSize = 11.sp
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(5.dp)
+                        )
+
+                        Text(
+                            text = "$ ${String.format("%,.0f", uiState.disponible)}",
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(18.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
 
-                            Text(
-                                text = "Gastos",
-                                color = GrisTexto,
-                                fontSize = 10.sp
-                            )
+                            Column {
 
-                            Spacer(
-                                modifier = Modifier.height(3.dp)
-                            )
+                                Text(
+                                    text = "Suma Presupuestos",
+                                    color = GrisTexto,
+                                    fontSize = 10.sp
+                                )
 
-                            Text(
-                                text = "$ 403.700",
-                                color = Color(0xFFFF666B),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                                Spacer(
+                                    modifier = Modifier.height(3.dp)
+                                )
+
+                                Text(
+                                    text = "$ ${String.format("%,.0f", uiState.presupuestoTotal)}",
+                                    color = VerdeGasti,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Column(
+                                horizontalAlignment = Alignment.End
+                            ) {
+
+                                Text(
+                                    text = "Gastos Totales",
+                                    color = GrisTexto,
+                                    fontSize = 10.sp
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(3.dp)
+                                )
+
+                                Text(
+                                    text = "$ ${String.format("%,.0f", uiState.totalGastado)}",
+                                    color = Color(0xFFFF666B),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -231,243 +322,74 @@ fun HomeScreen(
 
                 AccionRapida(
                     icono = "💰",
-                    texto = "Agregar\ningreso",
+                    texto = "Presupuesto",
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        // PENDIENTE
-                    }
+                    onClick = onPresupuesto
                 )
 
                 AccionRapida(
-                    icono = "🎯",
-                    texto = "Ver\nmetas",
+                    icono = "📊",
+                    texto = "Estadísticas",
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        // PENDIENTE
-                    }
+                    onClick = onStats
                 )
 
                 AccionRapida(
-                    icono = "📋",
-                    texto = "Historial",
+                    icono = "👤",
+                    texto = "Perfil",
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        // PENDIENTE
-                    }
+                    onClick = onPerfil
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-            Text(
-                text = "Gastos por categoría",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = AzulTarjeta
+            if (!esCuentaNueva && uiState.listaGastos.isNotEmpty()) {
+                Spacer(
+                    modifier = Modifier.height(24.dp)
                 )
-            ) {
 
-                Column(
-                    modifier = Modifier.padding(18.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Text(
+                        text = "Gastos recientes",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                        Box(
-                            modifier = Modifier.size(130.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                    Text(
+                        text = "Ver todos (${uiState.listaGastos.size})",
+                        color = VerdeGasti,
+                        fontSize = 10.sp
+                    )
+                }
 
-                            Canvas(
-                                modifier = Modifier.size(115.dp)
-                            ) {
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
 
-                                val strokeWidth = 28f
-
-                                drawArc(
-                                    color = Color(0xFFFF8A00),
-                                    startAngle = -90f,
-                                    sweepAngle = 110f,
-                                    useCenter = false,
-                                    style = Stroke(strokeWidth)
-                                )
-
-                                drawArc(
-                                    color = Color(0xFF3E8BFF),
-                                    startAngle = 20f,
-                                    sweepAngle = 80f,
-                                    useCenter = false,
-                                    style = Stroke(strokeWidth)
-                                )
-
-                                drawArc(
-                                    color = Color(0xFF9B6CFF),
-                                    startAngle = 100f,
-                                    sweepAngle = 65f,
-                                    useCenter = false,
-                                    style = Stroke(strokeWidth)
-                                )
-
-                                drawArc(
-                                    color = Color(0xFF00E5A8),
-                                    startAngle = 165f,
-                                    sweepAngle = 55f,
-                                    useCenter = false,
-                                    style = Stroke(strokeWidth)
-                                )
-
-                                drawArc(
-                                    color = Color(0xFFFF666B),
-                                    startAngle = 220f,
-                                    sweepAngle = 45f,
-                                    useCenter = false,
-                                    style = Stroke(strokeWidth)
-                                )
-                            }
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-
-                                Text(
-                                    text = "$403K",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Text(
-                                    text = "Total",
-                                    color = GrisTexto,
-                                    fontSize = 9.sp
-                                )
-                            }
-                        }
-
-                        Spacer(
-                            modifier = Modifier.width(14.dp)
-                        )
-
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-
-                            CategoriaResumen(
-                                icono = "🍔",
-                                nombre = "Comida",
-                                porcentaje = "35%"
-                            )
-
-                            CategoriaResumen(
-                                icono = "🚌",
-                                nombre = "Transporte",
-                                porcentaje = "25%"
-                            )
-
-                            CategoriaResumen(
-                                icono = "📚",
-                                nombre = "Estudio",
-                                porcentaje = "18%"
-                            )
-
-                            CategoriaResumen(
-                                icono = "🎮",
-                                nombre = "Entretenimiento",
-                                porcentaje = "12%"
-                            )
-
-                            CategoriaResumen(
-                                icono = "📦",
-                                nombre = "Otros",
-                                porcentaje = "10%"
-                            )
-                        }
+                uiState.listaGastos.forEach { gasto ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val icono = when (gasto.categoria) {
+                        "Comida" -> "🍔"
+                        "Transporte" -> "🚌"
+                        "Estudio" -> "📚"
+                        "Entretenimiento" -> "🎮"
+                        "Compras" -> "🛍"
+                        else -> "📦"
                     }
+                    GastoReciente(
+                        icono = icono,
+                        nombre = gasto.descripcion,
+                        detalle = "${gasto.categoria} · ${gasto.fecha}",
+                        valor = "-$${String.format("%,.0f", gasto.monto)}",
+                        onEditar = { onEditarGasto(gasto) },
+                        onEliminar = { viewModel.eliminarGasto(gasto) }
+                    )
                 }
             }
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-                Text(
-                    text = "Gastos recientes",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "Ver todos",
-                    color = VerdeGasti,
-                    fontSize = 10.sp
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
-
-            GastoReciente(
-                icono = "🍔",
-                nombre = "Almuerzo restaurante",
-                detalle = "Comida · 12 ago",
-                valor = "-$19K"
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            GastoReciente(
-                icono = "🚌",
-                nombre = "Bus universidad",
-                detalle = "Transporte · 12 ago",
-                valor = "-$3K"
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            GastoReciente(
-                icono = "📚",
-                nombre = "Fotocopias y materiales",
-                detalle = "Estudio · 11 ago",
-                valor = "-$45K"
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            GastoReciente(
-                icono = "🎮",
-                nombre = "Cine con amigos",
-                detalle = "Entretenimiento · 10 ago",
-                valor = "-$30K"
-            )
         }
 
         Box(
@@ -498,7 +420,7 @@ fun HomeScreen(
 
         BottomNavigationBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            onGastos = onGastos,
+            onGastos = onRegistrarGasto,
             onPresupuesto = onPresupuesto,
             onStats = onStats,
             onPerfil = onPerfil
@@ -552,50 +474,13 @@ fun AccionRapida(
 }
 
 @Composable
-fun CategoriaResumen(
-    icono: String,
-    nombre: String,
-    porcentaje: String
-) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Text(
-            text = icono,
-            fontSize = 13.sp
-        )
-
-        Spacer(
-            modifier = Modifier.width(6.dp)
-        )
-
-        Text(
-            text = nombre,
-            color = GrisTexto,
-            fontSize = 9.sp,
-            modifier = Modifier.weight(1f)
-        )
-
-        Text(
-            text = porcentaje,
-            color = Color.White,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
 fun GastoReciente(
     icono: String,
     nombre: String,
     detalle: String,
-    valor: String
+    valor: String,
+    onEditar: () -> Unit,
+    onEliminar: () -> Unit
 ) {
 
     Row(
@@ -654,8 +539,42 @@ fun GastoReciente(
             text = valor,
             color = Color(0xFFFF666B),
             fontSize = 11.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 8.dp)
         )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(Color(0xFF182438), CircleShape)
+                    .clickable { onEditar() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "✎",
+                    color = Color.White,
+                    fontSize = 11.sp
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(Color(0xFF26344A), CircleShape)
+                    .clickable { onEliminar() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "✕",
+                    color = Color(0xFFFF666B),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
 

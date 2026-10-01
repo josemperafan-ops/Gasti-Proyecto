@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.google.firebase.auth.FirebaseAuth
 
+import edu.unicauca.aplimovil.proyectogasti.data.local.entity.GastoEntity
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.EstadisticasScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.HomeScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.LoginScreen
@@ -36,6 +37,10 @@ class MainActivity : ComponentActivity() {
                         "login"
                     }
                 )
+            }
+
+            var gastoAEditar by remember {
+                mutableStateOf<GastoEntity?>(null)
             }
 
             if (pantallaActual == "login") {
@@ -69,10 +74,17 @@ class MainActivity : ComponentActivity() {
 
                 HomeScreen(
                     onRegistrarGasto = {
+                        gastoAEditar = null
+                        pantallaActual = "registrar_gasto"
+                    },
+
+                    onEditarGasto = { gasto ->
+                        gastoAEditar = gasto
                         pantallaActual = "registrar_gasto"
                     },
 
                     onGastos = {
+                        gastoAEditar = null
                         pantallaActual = "registrar_gasto"
                     },
 
@@ -93,16 +105,20 @@ class MainActivity : ComponentActivity() {
             else if (pantallaActual == "registrar_gasto") {
 
                 RegistrarGastoScreen(
+                    gastoAEditar = gastoAEditar,
 
                     onBack = {
+                        gastoAEditar = null
                         pantallaActual = "home"
                     },
 
                     onInicio = {
+                        gastoAEditar = null
                         pantallaActual = "home"
                     },
 
                     onGastos = {
+                        gastoAEditar = null
                         pantallaActual = "registrar_gasto"
                     },
 
@@ -133,6 +149,7 @@ class MainActivity : ComponentActivity() {
                     },
 
                     onGastos = {
+                        gastoAEditar = null
                         pantallaActual = "registrar_gasto"
                     },
 
@@ -163,6 +180,7 @@ class MainActivity : ComponentActivity() {
                     },
 
                     onGastos = {
+                        gastoAEditar = null
                         pantallaActual = "registrar_gasto"
                     },
 
@@ -189,6 +207,7 @@ class MainActivity : ComponentActivity() {
                     },
 
                     onGastos = {
+                        gastoAEditar = null
                         pantallaActual = "registrar_gasto"
                     },
 
