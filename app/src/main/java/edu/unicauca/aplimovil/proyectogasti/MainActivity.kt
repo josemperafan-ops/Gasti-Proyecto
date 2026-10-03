@@ -16,7 +16,9 @@ import edu.unicauca.aplimovil.proyectogasti.ui.theme.LoginScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.PerfilScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.PresupuestoScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.RegistrarGastoScreen
+import edu.unicauca.aplimovil.proyectogasti.ui.theme.RegistrarIngresoScreen
 import edu.unicauca.aplimovil.proyectogasti.ui.theme.RegistroScreen
+
 
 class MainActivity : ComponentActivity() {
 
@@ -43,9 +45,15 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<GastoEntity?>(null)
             }
 
+
+            // =========================================================
+            // LOGIN
+            // =========================================================
+
             if (pantallaActual == "login") {
 
                 LoginScreen(
+
                     onLogin = {
                         pantallaActual = "home"
                     },
@@ -55,6 +63,11 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
+
+
+            // =========================================================
+            // REGISTRO DE USUARIO
+            // =========================================================
 
             else if (pantallaActual == "registro") {
 
@@ -70,9 +83,15 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+
+            // =========================================================
+            // INICIO
+            // =========================================================
+
             else if (pantallaActual == "home") {
 
                 HomeScreen(
+
                     onRegistrarGasto = {
                         gastoAEditar = null
                         pantallaActual = "registrar_gasto"
@@ -102,9 +121,15 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+
+            // =========================================================
+            // REGISTRAR GASTO
+            // =========================================================
+
             else if (pantallaActual == "registrar_gasto") {
 
                 RegistrarGastoScreen(
+
                     gastoAEditar = gastoAEditar,
 
                     onBack = {
@@ -135,6 +160,26 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
+
+
+            // =========================================================
+            // REGISTRAR INGRESO
+            // =========================================================
+
+            else if (pantallaActual == "registrar_ingreso") {
+
+                RegistrarIngresoScreen(
+
+                    onVolver = {
+                        pantallaActual = "perfil"
+                    }
+                )
+            }
+
+
+            // =========================================================
+            // PRESUPUESTO
+            // =========================================================
 
             else if (pantallaActual == "presupuesto") {
 
@@ -167,6 +212,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+
+            // =========================================================
+            // ESTADÍSTICAS
+            // =========================================================
+
             else if (pantallaActual == "estadisticas") {
 
                 EstadisticasScreen(
@@ -198,6 +248,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+
+            // =========================================================
+            // PERFIL
+            // =========================================================
+
             else if (pantallaActual == "perfil") {
 
                 PerfilScreen(
@@ -218,19 +273,22 @@ class MainActivity : ComponentActivity() {
                     onStats = {
                         pantallaActual = "estadisticas"
                     },
-
                     onPerfil = {
                         pantallaActual = "perfil"
                     },
 
-                    onCerrarSesion = {
+                    onIngresos = {
+                        pantallaActual = "registrar_ingreso"
+                    },
 
+                    onCerrarSesion = {
                         FirebaseAuth
                             .getInstance()
                             .signOut()
 
                         pantallaActual = "login"
                     }
+
                 )
             }
         }
