@@ -78,6 +78,10 @@ fun PerfilScreen(
 
         } ?: 0L
 
+    // ---------------------------------------------------------
+    // VIEWMODEL
+    // ---------------------------------------------------------
+
     val viewModel: PerfilViewModel = viewModel(
         factory = PerfilViewModel.Factory(
             usuarioDao = database.usuarioDao(),
@@ -87,10 +91,24 @@ fun PerfilScreen(
         )
     )
 
+    // Estado del perfil
     val uiState by viewModel.uiState.collectAsState()
 
-    val nombreUsuario = uiState.nombre
-    val correoUsuarioMostrar = uiState.correo
+    // ---------------------------------------------------------
+    // DATOS DEL USUARIO
+    // ---------------------------------------------------------
+
+    val nombreUsuario = usuario?.displayName
+        ?.takeIf { it.isNotBlank() }
+        ?: uiState.nombre
+            .takeIf {
+                it.isNotBlank() && it != "Usuario"
+            }
+        ?: "Usuario"
+
+    val correoUsuarioMostrar = usuario?.email
+        ?.takeIf { it.isNotBlank() }
+        ?: uiState.correo
 
     val iniciales = nombreUsuario
         .split(" ")
@@ -99,6 +117,10 @@ fun PerfilScreen(
         .joinToString("") {
             it.first().uppercase()
         }
+
+    // ---------------------------------------------------------
+    // CONTENEDOR PRINCIPAL
+    // ---------------------------------------------------------
 
     Box(
         modifier = Modifier
