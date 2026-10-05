@@ -27,6 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import edu.unicauca.aplimovil.proyectogasti.data.local.GastiDatabase
+import edu.unicauca.aplimovil.proyectogasti.data.local.entity.UsuarioEntity
+import kotlinx.coroutines.launch
 
 private val Fondo = Color(0xFF050B14)
 private val AzulTarjeta = Color(0xFF101A2A)
@@ -59,6 +65,15 @@ fun RegistroScreen(
     var mensajeError by remember {
         mutableStateOf("")
     }
+    val context = LocalContext.current.applicationContext
+
+    val database = remember {
+        GastiDatabase.getDatabase(context)
+    }
+
+    val scope = rememberCoroutineScope()
+
+
 
     Column(
         modifier = Modifier
@@ -320,6 +335,16 @@ fun RegistroScreen(
                                             FirebaseAuth
                                                 .getInstance()
                                                 .currentUser
+                                        val correoRegistrado = usuario?.email ?: correo.trim()
+
+                                        scope.launch {
+                                            database.usuarioDao().guardarUsuario(
+                                                UsuarioEntity(
+                                                    correo = correoRegistrado,
+                                                    nombre = nombre.trim()
+                                                )
+                                            )
+                                        }
 
                                         val perfil =
                                             UserProfileChangeRequest

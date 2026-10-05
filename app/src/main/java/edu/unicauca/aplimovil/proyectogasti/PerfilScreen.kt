@@ -19,13 +19,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
+import edu.unicauca.aplimovil.proyectogasti.data.local.GastiDatabase
+import edu.unicauca.aplimovil.proyectogasti.ui.viewmodel.PerfilViewModel
+import java.util.concurrent.TimeUnit
 
 private val FondoPerfil = Color(0xFF050B14)
 private val AzulPerfil = Color(0xFF101A2A)
@@ -41,18 +50,65 @@ fun PerfilScreen(
     onPresupuesto: () -> Unit,
     onStats: () -> Unit,
     onPerfil: () -> Unit,
+    onIngresos: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
+
+    val context = LocalContext.current.applicationContext
+
+    val database = remember {
+        GastiDatabase.getDatabase(context)
+    }
 
     val usuario = FirebaseAuth
         .getInstance()
         .currentUser
 
+    val correoUsuario = usuario?.email ?: ""
+
+    val diasUsando =
+        usuario?.metadata?.creationTimestamp?.let { fechaCreacion ->
+
+            val diferencia =
+                System.currentTimeMillis() - fechaCreacion
+
+            TimeUnit.MILLISECONDS
+                .toDays(diferencia)
+                .coerceAtLeast(0)
+
+        } ?: 0L
+
+    // ---------------------------------------------------------
+    // VIEWMODEL
+    // ---------------------------------------------------------
+
+    val viewModel: PerfilViewModel = viewModel(
+        factory = PerfilViewModel.Factory(
+            usuarioDao = database.usuarioDao(),
+            gastoDao = database.gastoDao(),
+            correoUsuario = correoUsuario,
+            diasUsando = diasUsando
+        )
+    )
+
+    // Estado del perfil
+    val uiState by viewModel.uiState.collectAsState()
+
+    // ---------------------------------------------------------
+    // DATOS DEL USUARIO
+    // ---------------------------------------------------------
+
     val nombreUsuario = usuario?.displayName
+        ?.takeIf { it.isNotBlank() }
+        ?: uiState.nombre
+            .takeIf {
+                it.isNotBlank() && it != "Usuario"
+            }
         ?: "Usuario"
 
-    val correoUsuario = usuario?.email
-        ?: "Sin correo"
+    val correoUsuarioMostrar = usuario?.email
+        ?.takeIf { it.isNotBlank() }
+        ?: uiState.correo
 
     val iniciales = nombreUsuario
         .split(" ")
@@ -61,6 +117,10 @@ fun PerfilScreen(
         .joinToString("") {
             it.first().uppercase()
         }
+
+    // ---------------------------------------------------------
+    // CONTENEDOR PRINCIPAL
+    // ---------------------------------------------------------
 
     Box(
         modifier = Modifier
@@ -79,6 +139,10 @@ fun PerfilScreen(
                     bottom = 80.dp
                 )
         ) {
+
+            // ---------------------------------------------------------
+            // ENCABEZADO DEL PERFIL
+            // ---------------------------------------------------------
 
             Row(
                 modifier = Modifier
@@ -127,7 +191,7 @@ fun PerfilScreen(
                     )
 
                     Text(
-                        text = correoUsuario,
+                        text = correoUsuarioMostrar,
                         color = GrisPerfil,
                         fontSize = 10.sp
                     )
@@ -162,6 +226,10 @@ fun PerfilScreen(
                 }
             }
 
+            // ---------------------------------------------------------
+            // ESTADÍSTICAS
+            // ---------------------------------------------------------
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -173,74 +241,30 @@ fun PerfilScreen(
             ) {
 
                 EstadisticaPerfil(
-                    "12",
+                    uiState.cantidadGastos.toString(),
                     "Gastos",
-                    "mayo",
+                    "registrados",
                     Modifier.weight(1f)
                 )
 
                 EstadisticaPerfil(
-                    "$1.6M",
-                    "Ahorrado",
-                    "",
+                    "$${String.format("%,.0f", uiState.totalGastado)}",
+                    "Gastado",
+                    "total",
                     Modifier.weight(1f)
                 )
 
                 EstadisticaPerfil(
-                    "47",
+                    uiState.diasUsando.toString(),
                     "Días",
                     "usando",
                     Modifier.weight(1f)
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .background(
-                        AzulPerfil,
-                        RoundedCornerShape(16.dp)
-                    )
-                    .border(
-                        1.dp,
-                        BordePerfil,
-                        RoundedCornerShape(16.dp)
-                    )
-            ) {
-
-                OpcionPerfil(
-                    "🎯",
-                    "Metas de ahorro",
-                    "3 activas",
-                    false
-                )
-
-                OpcionPerfil(
-                    "📋",
-                    "Historial completo",
-                    "12 gastos",
-                    false
-                )
-
-                OpcionPerfil(
-                    "💰",
-                    "Ingresos",
-                    "$ 630.000",
-                    false
-                )
-
-                OpcionPerfil(
-                    "🔔",
-                    "Recordatorios",
-                    "Activo",
-                    true
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.height(13.dp)
-            )
+            // ---------------------------------------------------------
+            // OPCIONES PRINCIPALES
+            // ---------------------------------------------------------
 
             Column(
                 modifier = Modifier
@@ -258,37 +282,121 @@ fun PerfilScreen(
             ) {
 
                 OpcionPerfil(
-                    "🌙",
-                    "Modo oscuro",
-                    "Activado",
-                    false
+                    icono = "🎯",
+                    titulo = "Metas de ahorro",
+                    detalle = "3 activas",
+                    ultimo = false,
+                    onClick = {
+                        // Próximamente
+                    }
                 )
 
                 OpcionPerfil(
-                    "🌐",
-                    "Moneda",
-                    "COP $",
-                    false
+                    icono = "📋",
+                    titulo = "Historial completo",
+                    detalle = "${uiState.cantidadGastos} gastos",
+                    ultimo = false,
+                    onClick = {
+                        // Próximamente
+                    }
+                )
+
+                // -----------------------------------------------------
+                // INGRESOS
+                // -----------------------------------------------------
+
+                OpcionPerfil(
+                    icono = "💰",
+                    titulo = "Ingresos",
+                    detalle = "Registrar",
+                    ultimo = false,
+                    onClick = {
+                        onIngresos()
+                    }
                 )
 
                 OpcionPerfil(
-                    "📤",
-                    "Exportar datos",
-                    "CSV",
-                    false
-                )
-
-                OpcionPerfil(
-                    "⭐",
-                    "Calificar Gasti",
-                    "",
-                    true
+                    icono = "🔔",
+                    titulo = "Recordatorios",
+                    detalle = "Activo",
+                    ultimo = true,
+                    onClick = {
+                        // Próximamente
+                    }
                 )
             }
 
             Spacer(
                 modifier = Modifier.height(13.dp)
             )
+
+            // ---------------------------------------------------------
+            // CONFIGURACIÓN
+            // ---------------------------------------------------------
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(
+                        AzulPerfil,
+                        RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        1.dp,
+                        BordePerfil,
+                        RoundedCornerShape(16.dp)
+                    )
+            ) {
+
+                OpcionPerfil(
+                    icono = "🌙",
+                    titulo = "Modo oscuro",
+                    detalle = "Activado",
+                    ultimo = false,
+                    onClick = {
+                        // Próximamente
+                    }
+                )
+
+                OpcionPerfil(
+                    icono = "🌐",
+                    titulo = "Moneda",
+                    detalle = "COP $",
+                    ultimo = false,
+                    onClick = {
+                        // Próximamente
+                    }
+                )
+
+                OpcionPerfil(
+                    icono = "📤",
+                    titulo = "Exportar datos",
+                    detalle = "CSV",
+                    ultimo = false,
+                    onClick = {
+                        // Próximamente
+                    }
+                )
+
+                OpcionPerfil(
+                    icono = "⭐",
+                    titulo = "Calificar Gasti",
+                    detalle = "",
+                    ultimo = true,
+                    onClick = {
+                        // Próximamente
+                    }
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(13.dp)
+            )
+
+            // ---------------------------------------------------------
+            // CERRAR SESIÓN
+            // ---------------------------------------------------------
 
             Box(
                 modifier = Modifier
@@ -327,9 +435,13 @@ fun PerfilScreen(
                 color = Color(0xFF526078),
                 fontSize = 8.sp,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
+
+        // -------------------------------------------------------------
+        // BARRA INFERIOR
+        // -------------------------------------------------------------
 
         BarraInferiorPerfil(
             modifier = Modifier.align(
@@ -343,6 +455,11 @@ fun PerfilScreen(
         )
     }
 }
+
+
+// =====================================================================
+// ESTADÍSTICA
+// =====================================================================
 
 @Composable
 private fun EstadisticaPerfil(
@@ -401,18 +518,25 @@ private fun EstadisticaPerfil(
     }
 }
 
+
+// =====================================================================
+// OPCIÓN DEL PERFIL
+// =====================================================================
+
 @Composable
 private fun OpcionPerfil(
     icono: String,
     titulo: String,
     detalle: String,
-    ultimo: Boolean
+    ultimo: Boolean,
+    onClick: () -> Unit
 ) {
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                onClick()
             }
     ) {
 
@@ -481,6 +605,11 @@ private fun OpcionPerfil(
     }
 }
 
+
+// =====================================================================
+// BARRA INFERIOR
+// =====================================================================
+
 @Composable
 private fun BarraInferiorPerfil(
     modifier: Modifier = Modifier,
@@ -543,6 +672,11 @@ private fun BarraInferiorPerfil(
     }
 }
 
+
+// =====================================================================
+// ITEM DE LA BARRA INFERIOR
+// =====================================================================
+
 @Composable
 private fun ItemBarraPerfil(
     simbolo: String,
@@ -564,14 +698,22 @@ private fun ItemBarraPerfil(
 
         Text(
             text = simbolo,
-            color = if (activo) VerdePerfil else GrisPerfil,
+            color = if (activo) {
+                VerdePerfil
+            } else {
+                GrisPerfil
+            },
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
 
         Text(
             text = texto,
-            color = if (activo) VerdePerfil else GrisPerfil,
+            color = if (activo) {
+                VerdePerfil
+            } else {
+                GrisPerfil
+            },
             fontSize = 8.sp
         )
     }
