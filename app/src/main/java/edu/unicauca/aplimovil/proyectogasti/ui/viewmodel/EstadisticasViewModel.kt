@@ -119,11 +119,6 @@ data class EstadisticasUiState(
 // VIEWMODEL
 // =============================================================
 
-/**
- * ViewModel encargado del análisis estadístico de gastos y presupuesto.
- * Filtra gastos por periodo (semana, mes, año), calcula porcentajes de ejecución presupuestal,
- * agrupa gastos por categoría, genera series de datos para gráficas y detecta insights.
- */
 class EstadisticasViewModel(
     private val gastoDao: GastoDao,
     private val presupuestoRepository:
@@ -208,13 +203,6 @@ class EstadisticasViewModel(
     // CALCULAR ESTADISTICAS
     // =========================================================
 
-    /**
-     * Calcula dinámicamente las métricas de gasto y presupuesto:
-     * - Filtra gastos según el periodo seleccionado.
-     * - Suma el gasto total y determina el porcentaje de uso del presupuesto.
-     * - Agrupa gastos por categoría y determina la categoría con mayor egreso.
-     * - Construye los datos para las gráficas diaria y comparativa mensual.
-     */
     private fun calcularEstado(
         gastos: List<GastoEntity>,
         presupuesto: Double,

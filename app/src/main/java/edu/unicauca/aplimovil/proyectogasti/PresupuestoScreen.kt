@@ -55,11 +55,6 @@ private val FondoPresupuesto = Color(0xFF211D08)
 private val BordePresupuesto = Color(0xFF6C5815)
 private val FondoAdvertencia = Color(0xFF25231F)
 
-/**
- * Pantalla de control de presupuestos en Jetpack Compose.
- * Visualiza la suma total del presupuesto mensual, el total gastado, el saldo restante
- * y la barra de progreso del consumo. Permite crear, modificar y eliminar presupuestos.
- */
 @Composable
 fun PresupuestoScreen(
     onBack: () -> Unit,

@@ -64,12 +64,6 @@ private fun obtenerFechaActualFormateada(): String {
     return "$dia de $mes de $anio"
 }
 
-/**
- * Pantalla de registro/edición de gastos en Jetpack Compose.
- * Permite ingresar o actualizar el monto del gasto, seleccionar accesos rápidos de monto,
- * elegir una categoría (Comida, Transporte, Estudio, Entretenimiento, Compras, Otros),
- * escribir una descripción y seleccionar una fecha a través de un DatePickerDialog.
- */
 @Composable
 fun RegistrarGastoScreen(
     gastoAEditar: GastoEntity? = null,

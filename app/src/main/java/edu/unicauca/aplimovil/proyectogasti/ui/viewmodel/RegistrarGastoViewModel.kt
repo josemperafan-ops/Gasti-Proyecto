@@ -16,11 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/**
- * ViewModel para gestionar la creación y modificación de gastos.
- * Realiza la validación de campos (monto positivo, categoría, descripción, fecha válida)
- * y comprueba la disponibilidad del presupuesto antes de guardar.
- */
 class RegistrarGastoViewModel(
     private val repository: GastoRepository,
     private val presupuestoDao: PresupuestoDao,
@@ -30,19 +25,15 @@ class RegistrarGastoViewModel(
 ) : ViewModel() {
 
     private val _mensajeError = MutableStateFlow("")
-    /** Flujo que emite mensajes de error de validación hacia la UI. */
     val mensajeError: StateFlow<String> = _mensajeError.asStateFlow()
 
     private val _navegarInicio = MutableSharedFlow<Unit>()
-    /** Evento de navegación única al completarse el registro exitosamente. */
     val navegarInicio: SharedFlow<Unit> = _navegarInicio.asSharedFlow()
 
-    /** Limpia los errores de la pantalla cuando el usuario corrige o interactúa con los campos. */
     fun limpiarError() {
         _mensajeError.value = ""
     }
 
-    /** Convierte el formato de fecha generado por el DatePickerDialog ("D de MES de AAAA") a un objeto LocalDate. */
     private fun parsearFecha(fechaStr: String): LocalDate? {
         return try {
             val texto = fechaStr.trim().lowercase(java.util.Locale.forLanguageTag("es"))
@@ -67,23 +58,16 @@ class RegistrarGastoViewModel(
         }
     }
 
-    /** Valida que la fecha ingresada no esté vacía y tenga un formato correcto. */
     private fun esFechaValida(fechaStr: String): Boolean {
         if (fechaStr.isBlank()) return false
         return parsearFecha(fechaStr) != null
     }
 
-    /** Retorna el mensaje de error si la fecha no es válida. */
     private fun obtenerErrorFecha(fechaStr: String): String {
         if (fechaStr.isBlank()) return "La fecha es obligatoria."
         return "Ingresa una fecha válida."
     }
 
-    /**
-     * Procesa la solicitud para guardar o editar un gasto.
-     * Valida obligatoriedad y límites financieros: exige tener un presupuesto creado
-     * y rechaza egresos que excedan el saldo disponible en el presupuesto.
-     */
     fun guardarGasto(id: Long = 0L, montoStr: String, categoria: String, descripcion: String, fecha: String) {
         val monto = montoStr.toDoubleOrNull()
 
