@@ -16,6 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+/**
+ * ViewModel para gestionar la creación y modificación de gastos.
+ * Realiza la validación de campos (monto positivo, categoría, descripción, fecha válida)
+ * y comprueba la disponibilidad del presupuesto antes de guardar.
+ */
 class RegistrarGastoViewModel(
     private val repository: GastoRepository,
     private val presupuestoDao: PresupuestoDao,
@@ -25,67 +30,60 @@ class RegistrarGastoViewModel(
 ) : ViewModel() {
 
     private val _mensajeError = MutableStateFlow("")
+    /** Flujo que emite mensajes de error de validación hacia la UI. */
     val mensajeError: StateFlow<String> = _mensajeError.asStateFlow()
 
     private val _navegarInicio = MutableSharedFlow<Unit>()
+    /** Evento de navegación única al completarse el registro exitosamente. */
     val navegarInicio: SharedFlow<Unit> = _navegarInicio.asSharedFlow()
 
+    /** Limpia los errores de la pantalla cuando el usuario corrige o interactúa con los campos. */
     fun limpiarError() {
         _mensajeError.value = ""
     }
 
-    private fun esFechaValida(fechaStr: String): Boolean {
-        if (fechaStr.isBlank()) return false
+    /** Convierte el formato de fecha generado por el DatePickerDialog ("D de MES de AAAA") a un objeto LocalDate. */
+    private fun parsearFecha(fechaStr: String): LocalDate? {
         return try {
-            val partes = fechaStr.lowercase().split(" de ", " ", "/", "-")
-            val digitos = partes.mapNotNull { it.toIntOrNull() }
-            
-            val dia = digitos.firstOrNull() ?: return false
-            val anio = digitos.lastOrNull() ?: return false
+            val texto = fechaStr.trim().lowercase(java.util.Locale.forLanguageTag("es"))
+            val partes = texto.split(" de ")
+            if (partes.size == 3) {
+                val dia = partes[0].trim().toIntOrNull() ?: return null
+                val mesTexto = partes[1].trim()
+                val anio = partes[2].trim().toIntOrNull() ?: return null
 
-            val mesesMap = mapOf(
-                "enero" to 1, "febrero" to 2, "marzo" to 3, "abril" to 4,
-                "mayo" to 5, "junio" to 6, "julio" to 7, "agosto" to 8,
-                "septiembre" to 9, "octubre" to 10, "noviembre" to 11, "diciembre" to 12
-            )
-            val mesNombre = partes.find { mesesMap.containsKey(it) }
-            val mes = mesNombre?.let { mesesMap[it] } ?: digitos.getOrNull(1) ?: return false
-
-            val fechaSeleccionada = LocalDate.of(anio, mes, dia)
-            val hoy = LocalDate.now()
-
-            !fechaSeleccionada.isAfter(hoy)
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    private fun obtenerErrorFecha(fechaStr: String): String {
-        if (fechaStr.isBlank()) return "La fecha es obligatoria."
-        return try {
-            val partes = fechaStr.lowercase().split(" de ", " ", "/", "-")
-            val digitos = partes.mapNotNull { it.toIntOrNull() }
-            val dia = digitos.firstOrNull() ?: return "Ingresa una fecha válida."
-            val anio = digitos.lastOrNull() ?: return "Ingresa una fecha válida."
-            val mesesMap = mapOf(
-                "enero" to 1, "febrero" to 2, "marzo" to 3, "abril" to 4,
-                "mayo" to 5, "junio" to 6, "julio" to 7, "agosto" to 8,
-                "septiembre" to 9, "octubre" to 10, "noviembre" to 11, "diciembre" to 12
-            )
-            val mesNombre = partes.find { mesesMap.containsKey(it) }
-            val mes = mesNombre?.let { mesesMap[it] } ?: digitos.getOrNull(1) ?: return "Ingresa una fecha válida."
-
-            val fechaSeleccionada = LocalDate.of(anio, mes, dia)
-            if (fechaSeleccionada.isAfter(LocalDate.now())) {
-                "No puedes registrar gastos con fechas futuras."
+                val mesesMap = mapOf(
+                    "enero" to 1, "febrero" to 2, "marzo" to 3, "abril" to 4,
+                    "mayo" to 5, "junio" to 6, "julio" to 7, "agosto" to 8,
+                    "septiembre" to 9, "octubre" to 10, "noviembre" to 11, "diciembre" to 12
+                )
+                val mes = mesesMap[mesTexto] ?: return null
+                LocalDate.of(anio, mes, dia)
             } else {
-                "Ingresa una fecha válida."
+                null
             }
         } catch (e: Exception) {
-            "Ingresa una fecha válida."
+            null
         }
     }
 
+    /** Valida que la fecha ingresada no esté vacía y tenga un formato correcto. */
+    private fun esFechaValida(fechaStr: String): Boolean {
+        if (fechaStr.isBlank()) return false
+        return parsearFecha(fechaStr) != null
+    }
+
+    /** Retorna el mensaje de error si la fecha no es válida. */
+    private fun obtenerErrorFecha(fechaStr: String): String {
+        if (fechaStr.isBlank()) return "La fecha es obligatoria."
+        return "Ingresa una fecha válida."
+    }
+
+    /**
+     * Procesa la solicitud para guardar o editar un gasto.
+     * Valida obligatoriedad y límites financieros: exige tener un presupuesto creado
+     * y rechaza egresos que excedan el saldo disponible en el presupuesto.
+     */
     fun guardarGasto(id: Long = 0L, montoStr: String, categoria: String, descripcion: String, fecha: String) {
         val monto = montoStr.toDoubleOrNull()
 

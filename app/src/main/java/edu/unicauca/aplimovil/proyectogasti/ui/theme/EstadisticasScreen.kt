@@ -45,7 +45,11 @@ private val AmarilloStats = Color(0xFFFFC857)
 private val AzulBarra = Color(0xFF14253A)
 private val FondoBarra = Color(0xFF0A1423)
 
-
+/**
+ * Pantalla de análisis estadístico de gastos y presupuesto en Jetpack Compose.
+ * Ofrece filtros por periodo (Semana, Mes, Año), métricas de porcentaje de uso del presupuesto,
+ * gráfica de barras diaria, desglose de gastos por categoría y comparación histórica de los últimos meses.
+ */
 @Composable
 fun EstadisticasScreen(
     onBack: () -> Unit,

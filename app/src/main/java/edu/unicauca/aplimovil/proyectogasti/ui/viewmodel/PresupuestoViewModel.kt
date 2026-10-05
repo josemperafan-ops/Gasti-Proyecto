@@ -12,15 +12,27 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Estado de la interfaz de usuario para la pantalla de Presupuesto.
+ * Calcula el saldo disponible y el porcentaje ejecutado del presupuesto.
+ */
 data class PresupuestoUiState(
     val listaPresupuestos: List<PresupuestoEntity> = emptyList(),
     val presupuestoTotal: Double = 0.0,
     val totalGastado: Double = 0.0
 ) {
+    /** Saldo restante disponible (Suma Presupuestos - Total Gastado). */
     val disponible: Double get() = presupuestoTotal - totalGastado
+
+
+    /** Proporción del presupuesto consumida (0.0 a 1.0+). */
     val porcentajeUsado: Float get() = if (presupuestoTotal > 0) (totalGastado / presupuestoTotal).toFloat() else 0f
 }
 
+/**
+ * ViewModel encargado de la lógica de negocio para la gestión de presupuestos.
+ * Combina en tiempo real los presupuestos creados con los gastos ejecutados.
+ */
 class PresupuestoViewModel(
     private val presupuestoRepository: PresupuestoRepository,
     private val gastoDao: GastoDao,
@@ -28,6 +40,12 @@ class PresupuestoViewModel(
     private val mesAnio: String
 ) : ViewModel() {
 
+    /**
+     * Flujo de estado de la UI. Combina:
+     * 1. Lista de presupuestos creados para el mes/año actual.
+     * 2. Suma acumulada de presupuestos.
+     * 3. Total gastado en general por el usuario.
+     */
     val uiState: StateFlow<PresupuestoUiState> = combine(
         presupuestoRepository.obtenerPresupuestos(correoUsuario, mesAnio),
         presupuestoRepository.obtenerSumaPresupuestos(correoUsuario, mesAnio),
@@ -44,6 +62,7 @@ class PresupuestoViewModel(
         initialValue = PresupuestoUiState()
     )
 
+    /** Crea un nuevo presupuesto o actualiza un presupuesto existente. */
     fun guardarPresupuesto(id: Long = 0L, nombre: String, monto: Double) {
         viewModelScope.launch {
             val presupuesto = PresupuestoEntity(
@@ -57,6 +76,7 @@ class PresupuestoViewModel(
         }
     }
 
+    /** Elimina un presupuesto específico de la base de datos. */
     fun eliminarPresupuesto(presupuesto: PresupuestoEntity) {
         viewModelScope.launch {
             presupuestoRepository.eliminarPresupuesto(presupuesto)

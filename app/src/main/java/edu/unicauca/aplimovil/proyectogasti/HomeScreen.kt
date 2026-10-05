@@ -47,6 +47,11 @@ private val VerdeGasti = Color(0xFF00E5A8)
 private val GrisTexto = Color(0xFF8B9AAF)
 private val Borde = Color(0xFF26344A)
 
+/**
+ * Pantalla principal del dashboard financiero (HomeScreen).
+ * Muestra el saldo disponible en el presupuesto actual, el total de la suma de presupuestos
+ * y gastos acumulados, accesos rápidos a las funciones principales y la lista de gastos recientes.
+ */
 @Composable
 fun HomeScreen(
     onRegistrarGasto: () -> Unit,
